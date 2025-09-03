@@ -21,6 +21,8 @@ export default function RedirectHandler() {
 
       try {
         const longUrl = await urlService.getOriginalUrl(shortId);
+        // Log click with device/browser info
+        await urlService.logClick(shortId, navigator.userAgent);
         console.log('RedirectHandler: getOriginalUrl result', { shortId, longUrl }); // Debug log
         if (longUrl) {
           setOriginalUrl(longUrl);
