@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-950 text-gray-100;
+}
+
+.dark .min-h-screen {
+  @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950;
+}
