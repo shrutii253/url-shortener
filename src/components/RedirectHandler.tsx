@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
 import { urlService } from '../services/urlService';
 
+console.log('RedirectHandler mounted'); // Debug log to check if component is loaded
+
 export default function RedirectHandler() {
   const { shortId } = useParams<{ shortId: string }>();
   const [status, setStatus] = useState<'loading' | 'redirecting' | 'error'>('loading');
@@ -17,6 +19,7 @@ export default function RedirectHandler() {
 
       try {
         const longUrl = await urlService.getOriginalUrl(shortId);
+        console.log('RedirectHandler: getOriginalUrl result', { shortId, longUrl }); // Debug log
         if (longUrl) {
           setOriginalUrl(longUrl);
           setStatus('redirecting');
