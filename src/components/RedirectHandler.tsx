@@ -7,10 +7,12 @@ console.log('RedirectHandler mounted'); // Debug log to check if component is lo
 
 export default function RedirectHandler() {
   const { shortId } = useParams<{ shortId: string }>();
+  console.log('RedirectHandler shortId:', shortId); // Log shortId value
   const [status, setStatus] = useState<'loading' | 'redirecting' | 'error'>('loading');
   const [originalUrl, setOriginalUrl] = useState<string>('');
 
   useEffect(() => {
+    console.log('useEffect shortId:', shortId); // Log shortId inside useEffect
     const handleRedirect = async () => {
       if (!shortId) {
         setStatus('error');
