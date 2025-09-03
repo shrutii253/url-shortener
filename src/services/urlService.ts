@@ -4,6 +4,7 @@ import type { UrlRecord } from '../lib/supabase';
 
 export interface ShortenUrlRequest {
   longUrl: string;
+  customAlias?: string;
 }
 
 export interface ShortenUrlResponse {
@@ -19,14 +20,14 @@ class UrlService {
     this.baseUrl = window.location.origin;
   }
 
-  async shortenUrl(longUrl: string): Promise<ShortenUrlResponse> {
+  async shortenUrl(longUrl: string, customAlias?: string): Promise<ShortenUrlResponse> {
     // Validate URL
     if (!this.isValidUrl(longUrl)) {
       throw new Error('Invalid URL provided');
     }
 
-    // Generate unique short ID
-    const shortId = nanoid(8);
+    // Use custom alias if provided, else generate unique short ID
+    const shortId = customAlias && customAlias.trim() ? customAlias.trim() : nanoid(8);
 
     // Save to database
     const { data, error } = await supabase
@@ -39,6 +40,9 @@ class UrlService {
       .single();
 
     if (error) {
+      if (error.code === '23505' || error.message?.includes('duplicate')) {
+        throw new Error('Custom alias is already taken. Please choose another.');
+      }
       console.error('Database error:', error);
       throw new Error('Failed to create short URL');
     }

@@ -6,6 +6,7 @@ import Particles from 'react-tsparticles';
 
 export default function UrlForm() {
   const [longUrl, setLongUrl] = useState('');
+  const [customAlias, setCustomAlias] = useState('');
   const [result, setResult] = useState<ShortenUrlResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,9 +19,10 @@ export default function UrlForm() {
     setResult(null);
 
     try {
-      const response = await urlService.shortenUrl(longUrl);
+      const response = await urlService.shortenUrl(longUrl, customAlias);
       setResult(response);
       setLongUrl('');
+      setCustomAlias('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to shorten URL');
     } finally {
@@ -93,6 +95,21 @@ export default function UrlForm() {
                   disabled={isLoading}
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="customAlias" className="block text-sm font-medium text-gray-300">Custom Alias <span className="text-gray-500">(optional)</span></label>
+              <input
+                type="text"
+                id="customAlias"
+                value={customAlias}
+                onChange={(e) => setCustomAlias(e.target.value)}
+                placeholder="e.g. shru-cool"
+                className="w-full pl-4 pr-4 py-4 bg-[#232323] border border-[#232323] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#6e5cff] focus:border-transparent text-lg text-white placeholder-gray-500"
+                disabled={isLoading}
+                maxLength={32}
+                pattern="^[a-zA-Z0-9\-_.]+$"
+                title="Letters, numbers, dashes, underscores, and dots only"
+              />
             </div>
             <button
               type="submit"
