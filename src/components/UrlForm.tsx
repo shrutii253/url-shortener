@@ -136,7 +136,7 @@ export default function UrlForm() {
                 id="customAlias"
                 value={customAlias}
                 onChange={(e) => setCustomAlias(e.target.value)}
-                placeholder="e.g. shru-cool"
+                placeholder="e.g. hello-world"
                 className={
                   (theme === 'dark'
                     ? 'w-full pl-4 pr-4 py-4 bg-[#232323] border border-[#232323] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#6e5cff] focus:border-transparent text-lg text-white placeholder-gray-500'
