@@ -27,7 +27,8 @@ class UrlService {
     }
 
     // Use custom alias if provided, else generate unique short ID
-    const shortId = customAlias && customAlias.trim() ? customAlias.trim() : nanoid(8);
+    const shortId = customAlias && customAlias.trim() ? nanoid(8) : nanoid(8);
+    const customAliasValue = customAlias && customAlias.trim() ? customAlias.trim() : null;
 
     // Save to database
     const { data, error } = await supabase
@@ -35,6 +36,7 @@ class UrlService {
       .insert({
         long_url: longUrl,
         short_id: shortId,
+        custom_alias: customAliasValue,
       })
       .select()
       .single();
@@ -47,12 +49,14 @@ class UrlService {
       throw new Error('Failed to create short URL');
     }
 
-    const shortUrl = `${this.baseUrl}/${shortId}`;
+    const shortUrl = customAliasValue
+      ? `${this.baseUrl}/${customAliasValue}`
+      : `${this.baseUrl}/${shortId}`;
 
     return {
       shortUrl,
       longUrl,
-      shortId,
+      shortId: customAliasValue || shortId,
     };
   }
 
