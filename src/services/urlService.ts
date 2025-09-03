@@ -58,7 +58,7 @@ class UrlService {
       .select('long_url')
       .eq('short_id', shortId)
       .single();
-
+    console.log('Supabase getOriginalUrl:', { shortId, data, error }); // Debug log
     if (error || !data) {
       return null;
     }
