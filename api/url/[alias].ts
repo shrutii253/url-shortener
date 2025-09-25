@@ -5,10 +5,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Remote Redis instance (from Redis Cloud)
-const redis = new Redis(process.env.REDIS_URL!);
-
-// Supabase client
+const redis = new Redis(process.env.REDIS_URL!); 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
   process.env.VITE_SUPABASE_ANON_KEY!
@@ -19,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (typeof alias !== 'string') return res.status(400).json({ error: 'Invalid alias' });
 
-  // Check Redis cache first
+  // Check Redis cache
   const cachedUrl = await redis.get(alias);
   if (cachedUrl) return res.json({ longUrl: cachedUrl, cached: true });
 
@@ -32,8 +29,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (error || !data) return res.status(404).json({ error: 'Not found' });
 
-  // Cache in Redis
-  await redis.set(alias, data.long_url, 'EX', 3600); // 1 hour
+  // Cache in Redis for 1 hour
+  await redis.set(alias, data.long_url, 'EX', 3600);
 
   res.json({ longUrl: data.long_url, cached: false });
 }
