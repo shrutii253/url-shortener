@@ -1,11 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import IORedis from 'ioredis';
+import Redis from 'ioredis';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const redis = new IORedis(process.env.REDIS_URL!); 
+const redis = new Redis(process.env.REDIS_URL!); 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
   process.env.VITE_SUPABASE_ANON_KEY!
