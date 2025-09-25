@@ -1,22 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2023"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-
-    /* Linting */
+    "composite": true,
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+
+    /* This enables correct default imports from CommonJS modules like ioredis */
+    "esModuleInterop": true,
+    
+    "skipLibCheck": true
   },
-  "include": ["vite.config.ts"]
+  /* This tells TypeScript to apply these rules to all backend files */
+  "include": ["api/**/*.ts", "vite.config.ts"]
 }
