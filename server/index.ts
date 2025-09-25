@@ -20,7 +20,8 @@ app.use(express.json());
 const port = process.env.PORT || 4000;
 
 // Connect to Redis
-const redis = new (Redis as any)();// defaults to localhost:6379
+const redis = new Redis(process.env.REDIS_URL!);
+
 
 // Connect to Supabase
 const supabase = createClient(
