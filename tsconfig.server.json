@@ -6,8 +6,12 @@
     "outDir": "dist",
     "rootDir": ".",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleDetection": "force",
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["server/**/*"]
+  "include": ["api/**/*", "server/**/*"]
+
 }
