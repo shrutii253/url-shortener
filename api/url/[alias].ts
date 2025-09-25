@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
