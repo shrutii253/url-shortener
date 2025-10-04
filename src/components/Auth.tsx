@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Zap, AlertCircle, User, UserPlus } from 'lucide-react';
+import { Mail, Lock, Zap, AlertCircle, User, UserPlus, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Particles from 'react-tsparticles';
 
@@ -11,6 +11,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const { signIn, signUp } = useAuth();
@@ -151,18 +152,25 @@ export default function Auth() {
               <div className="relative">
                 <Lock className={theme === 'dark' ? 'absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5' : 'absolute left-4 top-1/2 transform -translate-y-1/2 text-[#6e5cff] w-5 h-5'} />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   className={
                     (theme === 'dark'
-                      ? 'w-full pl-12 pr-4 py-4 bg-[#232323] border border-[#232323] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#6e5cff] focus:border-transparent text-lg text-white placeholder-gray-500'
-                      : 'w-full pl-12 pr-4 py-4 bg-white border border-[#e0e0ff] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#6e5cff] focus:border-transparent text-lg text-[#232323] placeholder-[#6e5cff]')
+                      ? 'w-full pl-12 pr-12 py-4 bg-[#232323] border border-[#232323] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#6e5cff] focus:border-transparent text-lg text-white placeholder-gray-500'
+                      : 'w-full pl-12 pr-12 py-4 bg-white border border-[#e0e0ff] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#6e5cff] focus:border-transparent text-lg text-[#232323] placeholder-[#6e5cff]')
                   }
                   disabled={loading}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className={theme === 'dark' ? 'absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300' : 'absolute right-4 top-1/2 transform -translate-y-1/2 text-[#6e5cff] hover:text-[#a855f7]'}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
