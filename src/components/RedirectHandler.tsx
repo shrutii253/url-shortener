@@ -21,16 +21,10 @@ export default function RedirectHandler() {
 
       try {
         const longUrl = await urlService.getOriginalUrl(shortId);
-        // Log click with device/browser info
-        await urlService.logClick(shortId, navigator.userAgent);
         console.log('RedirectHandler: getOriginalUrl result', { shortId, longUrl }); // Debug log
         if (longUrl) {
-          setOriginalUrl(longUrl);
-          setStatus('redirecting');
-          // Add a small delay so users can see the redirect message
-          setTimeout(() => {
-            window.location.href = longUrl;
-          }, 2000);
+          // Instant redirect
+          window.location.href = longUrl;
         } else {
           setStatus('error');
         }

@@ -30,7 +30,7 @@ const supabase = createClient(
 );
 
 
-// Endpoint to get long URL from short alias
+// Endpoint to get long URL from short ID or custom alias
 app.get('/api/url/:alias', async (req: Request, res: Response) => {
   const { alias } = req.params;
 
@@ -40,19 +40,29 @@ app.get('/api/url/:alias', async (req: Request, res: Response) => {
     return res.json({ longUrl: cachedUrl, cached: true });
   }
 
-  // 2. Fallback to Supabase
-  const { data, error } = await supabase
+  // 2. Fallback to Supabase - check both short_id and custom_alias
+  let { data, error } = await supabase
     .from('urls')
     .select('long_url')
-    .eq('custom_alias', alias)
+    .eq('short_id', alias)
     .single();
 
   if (error || !data) {
-    return res.status(404).json({ error: 'Not found' });
+    // Try custom_alias
+    const result = await supabase
+      .from('urls')
+      .select('long_url')
+      .eq('custom_alias', alias)
+      .single();
+    
+    if (result.error || !result.data) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    data = result.data;
   }
 
   // 3. Cache in Redis for next time
-  await redis.set(alias, data.long_url, 'EX', 3600); // cache for 1 hour
+  await redis.set(alias, data.long_url, 'EX', 3600);
 
   res.json({ longUrl: data.long_url, cached: false });
 });
@@ -73,6 +83,23 @@ app.post('/api/url', async (req: Request, res: Response) => {
 
   await redis.set(customAlias, longUrl, 'EX', 3600);
   res.json({ success: true, customAlias });
+});
+
+// Get URL stats
+app.get('/api/stats/:shortId', async (req: Request, res: Response) => {
+  const { shortId } = req.params;
+  
+  const { data, error } = await supabase
+    .from('urls')
+    .select('short_id, long_url, clicks, created_at')
+    .eq('short_id', shortId)
+    .single();
+    
+  if (error || !data) {
+    return res.status(404).json({ error: 'URL not found' });
+  }
+  
+  res.json(data);
 });
 
 app.listen(port, () => {
