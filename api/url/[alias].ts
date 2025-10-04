@@ -53,7 +53,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Log click
     const forwardedFor = req.headers['x-forwarded-for'] as string;
-    const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : req.headers['x-real-ip'] || 'unknown';
+    const realIP = forwardedFor ? forwardedFor.split(',')[0].trim() : req.headers['x-real-ip'] || 'unknown';
+    const ip = '8.8.8.8'; // Test IP - remove in production
     const userAgent = req.headers['user-agent'];
     
     // Get geolocation
@@ -72,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
     
-    console.log('Logging click:', { ip, country, city, userAgent });
+    console.log('Logging click:', { realIP, ip, country, city, userAgent });
     
     await supabase.from('click_logs').insert({
       url_id: data.id,
