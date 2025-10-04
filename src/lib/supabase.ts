@@ -13,7 +13,9 @@ export interface UrlRecord {
   id: string;
   long_url: string;
   short_id: string;
+  custom_alias?: string;
   clicks: number;
   created_at: string;
   expires_at?: string;
+  user_id?: string;
 }

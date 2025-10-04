@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Link, Copy, Check, AlertCircle, Zap, BarChart3 } from 'lucide-react';
+import { Link, Copy, Check, AlertCircle, Zap, BarChart3, User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { urlService } from '../services/urlService';
 import type { ShortenUrlResponse } from '../services/urlService';
 import Particles from 'react-tsparticles';
 import Analytics from './Analytics';
 
 export default function UrlForm() {
+  const { user, signOut } = useAuth();
   const [longUrl, setLongUrl] = useState('');
   const [customAlias, setCustomAlias] = useState('');
   const [result, setResult] = useState<ShortenUrlResponse | null>(null);
@@ -89,18 +91,47 @@ export default function UrlForm() {
           <Zap className={theme === 'dark' ? 'w-8 h-8 text-white' : 'w-8 h-8 text-[#6e5cff]'} />
           <span className={theme === 'dark' ? 'text-2xl font-bold text-white tracking-tight' : 'text-2xl font-bold text-[#6e5cff] tracking-tight'}>Snipr</span>
         </div>
-        <button
-          onClick={toggleTheme}
-          className={
-            'px-4 py-2 rounded-lg font-medium transition-colors duration-200 border ' +
-            (theme === 'dark'
-              ? 'bg-[#232323] text-white border-[#232323] hover:bg-[#18181b]'
-              : 'bg-[#f3f3f3] text-[#6e5cff] border-[#6e5cff] hover:bg-[#e0e0ff]')
-          }
-          title="Toggle theme"
-        >
-          {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
-        </button>
+        <div className="flex items-center gap-3">
+          {user ? (
+            <a
+              href="/dashboard"
+              className={
+                'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors duration-200 border ' +
+                (theme === 'dark'
+                  ? 'bg-[#232323] text-white border-[#232323] hover:bg-[#18181b]'
+                  : 'bg-[#f3f3f3] text-[#6e5cff] border-[#6e5cff] hover:bg-[#e0e0ff]')
+              }
+            >
+              <User className="w-4 h-4" />
+              Dashboard
+            </a>
+          ) : (
+            <a
+              href="/auth"
+              className={
+                'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors duration-200 border ' +
+                (theme === 'dark'
+                  ? 'bg-[#232323] text-white border-[#232323] hover:bg-[#18181b]'
+                  : 'bg-[#f3f3f3] text-[#6e5cff] border-[#6e5cff] hover:bg-[#e0e0ff]')
+              }
+            >
+              <User className="w-4 h-4" />
+              Sign In
+            </a>
+          )}
+          <button
+            onClick={toggleTheme}
+            className={
+              'px-4 py-2 rounded-lg font-medium transition-colors duration-200 border ' +
+              (theme === 'dark'
+                ? 'bg-[#232323] text-white border-[#232323] hover:bg-[#18181b]'
+                : 'bg-[#f3f3f3] text-[#6e5cff] border-[#6e5cff] hover:bg-[#e0e0ff]')
+            }
+            title="Toggle theme"
+          >
+            {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
+          </button>
+        </div>
       </header>
       {/* Card */}
       <main className={theme === 'dark' ? 'w-full max-w-2xl mx-auto z-10' : 'w-full max-w-2xl mx-auto z-10'}>

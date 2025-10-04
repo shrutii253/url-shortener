@@ -17,7 +17,8 @@ class UrlService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = window.location.origin;
+    // Use server port for redirects
+    this.baseUrl = 'http://localhost:3000';
   }
 
   async shortenUrl(longUrl: string, customAlias?: string): Promise<ShortenUrlResponse> {
@@ -29,6 +30,9 @@ class UrlService {
     // Always generate random short ID
     const shortId = nanoid(8);
 
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+
     // Save to database
     const { data, error } = await supabase
       .from('urls')
@@ -36,6 +40,7 @@ class UrlService {
         long_url: longUrl,
         short_id: shortId,
         custom_alias: customAlias?.trim() || null,
+        user_id: user?.id || null,
       })
       .select()
       .single();
@@ -129,6 +134,24 @@ class UrlService {
     
     if (error) {
       console.error('Failed to fetch URLs:', error);
+      return [];
+    }
+    
+    return data || [];
+  }
+
+  async getUserUrls(): Promise<UrlRecord[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('urls')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Failed to fetch user URLs:', error);
       return [];
     }
     
