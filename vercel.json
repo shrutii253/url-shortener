@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/([a-zA-Z0-9\-_]+)$", "destination": "/api/url/$1" },
     { "source": "/((?!api).*)", "destination": "/" }
   ]
 }
