@@ -5,8 +5,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize Redis client
-const redis = new Redis(process.env.REDIS_URL!);
+// Initialize Redis client with error handling
+let redis: Redis | null = null;
+try {
+  redis = new Redis(process.env.REDIS_URL!);
+} catch (error) {
+  console.error('Redis connection failed:', error);
+}
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -22,11 +27,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Check Redis cache
-    const cachedUrl = await redis.get(alias);
+    // Check Redis cache with error handling
+    let cachedUrl = null;
+    if (redis) {
+      try {
+        cachedUrl = await redis.get(alias);
+        console.log('Redis GET:', alias, '->', cachedUrl);
+      } catch (redisError) {
+        console.error('Redis GET error:', redisError);
+      }
+    }
+    
     if (cachedUrl) {
+      console.log('Redis HIT - redirecting');
       return res.redirect(302, cachedUrl);
     }
+    console.log('Redis MISS - checking database');
 
     // Fallback to Supabase - try short_id first and increment clicks
     let { data, error } = await supabase
@@ -102,7 +118,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Cache in Redis for 1 hour
-    await redis.set(alias, data.long_url, 'EX', 3600);
+    if (redis) {
+      try {
+        await redis.set(alias, data.long_url, 'EX', 3600);
+        console.log('Redis SET success:', alias);
+      } catch (redisSetError) {
+        console.error('Redis SET error:', redisSetError);
+      }
+    }
 
     // Redirect to the original URL
     return res.redirect(302, data.long_url);
