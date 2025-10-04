@@ -19,7 +19,7 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/" element={<UrlForm />} />
-      <Route path="/auth" element={<Auth />} />
+      <Route path="/auth" element={user ? <Dashboard /> : <Auth />} />
       <Route path="/dashboard" element={user ? <Dashboard /> : <Auth />} />
       <Route path=":shortId" element={<RedirectHandler />} />
     </Routes>

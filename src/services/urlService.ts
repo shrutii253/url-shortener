@@ -17,8 +17,10 @@ class UrlService {
   private baseUrl: string;
 
   constructor() {
-    // Use server port for redirects
-    this.baseUrl = 'http://localhost:3000';
+    // Use current domain for redirects
+    this.baseUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : 'http://localhost:3000';
   }
 
   async shortenUrl(longUrl: string, customAlias?: string): Promise<ShortenUrlResponse> {

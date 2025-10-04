@@ -51,7 +51,10 @@ export default function Dashboard() {
 
   const getShortUrl = (url: UrlRecord) => {
     const alias = url.custom_alias || url.short_id;
-    return `${window.location.origin}/${alias}`;
+    const domain = window.location.hostname === 'localhost' 
+      ? 'https://your-vercel-domain.vercel.app' 
+      : window.location.origin;
+    return `${domain}/${alias}`;
   };
 
   if (selectedUrl) {
@@ -148,7 +151,7 @@ export default function Dashboard() {
                       try {
                         await signOut();
                         setShowUserMenu(false);
-                        window.location.href = '/';
+                        navigate('/');
                       } catch (error) {
                         console.error('Sign out error:', error);
                       }
