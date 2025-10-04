@@ -151,7 +151,7 @@ export default function Dashboard() {
                       try {
                         await signOut();
                         setShowUserMenu(false);
-                        navigate('/');
+                        navigate('/auth');
                       } catch (error) {
                         console.error('Sign out error:', error);
                       }
