@@ -26,7 +26,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showUserMenu) {
+      const target = event.target as Element;
+      if (showUserMenu && !target.closest('.user-menu')) {
         setShowUserMenu(false);
       }
     };
@@ -124,7 +125,7 @@ export default function Dashboard() {
             >
               {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
             </button>
-            <div className="relative">
+            <div className="relative user-menu">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className={
