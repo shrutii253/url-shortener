@@ -52,15 +52,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Log click
-    const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
+    const forwardedFor = req.headers['x-forwarded-for'] as string;
+    const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : req.headers['x-real-ip'] || 'unknown';
     const userAgent = req.headers['user-agent'];
     
     // Get geolocation
     let country = null, city = null;
-    if (ip && ip !== 'unknown') {
+    if (ip && ip !== 'unknown' && ip !== '127.0.0.1') {
       try {
         const geoResponse = await fetch(`http://ip-api.com/json/${ip}`);
         const geoData = await geoResponse.json();
+        console.log('Geo lookup for IP:', ip, 'Result:', geoData);
         if (geoData.status === 'success') {
           country = geoData.country;
           city = geoData.city;
@@ -69,6 +71,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('Geolocation error:', error);
       }
     }
+    
+    console.log('Logging click:', { ip, country, city, userAgent });
     
     await supabase.from('click_logs').insert({
       url_id: data.id,
