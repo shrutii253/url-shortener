@@ -28,18 +28,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.json({ longUrl: cachedUrl, cached: true });
     }
 
-    // Fallback to Supabase - try short_id first
+    // Fallback to Supabase - try short_id first and increment clicks
     let { data, error } = await supabase
       .from('urls')
-      .select('long_url')
+      .select('id, long_url, clicks')
       .eq('short_id', alias)
       .single();
 
+    let isCustomAlias = false;
     if (error || !data) {
       // Try custom_alias
       const result = await supabase
         .from('urls')
-        .select('long_url')
+        .select('id, long_url, clicks')
         .eq('custom_alias', alias)
         .single();
       
@@ -47,6 +48,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({ error: 'Not found' });
       }
       data = result.data;
+      isCustomAlias = true;
+    }
+
+    // Log click
+    const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
+    const userAgent = req.headers['user-agent'];
+    
+    // Get geolocation
+    let country = null, city = null;
+    if (ip && ip !== 'unknown') {
+      try {
+        const geoResponse = await fetch(`http://ip-api.com/json/${ip}`);
+        const geoData = await geoResponse.json();
+        if (geoData.status === 'success') {
+          country = geoData.country;
+          city = geoData.city;
+        }
+      } catch (error) {
+        console.error('Geolocation error:', error);
+      }
+    }
+    
+    await supabase.from('click_logs').insert({
+      url_id: data.id,
+      alias,
+      ip_address: ip,
+      user_agent: userAgent,
+      country,
+      city
+    });
+
+    // Increment clicks counter
+    if (isCustomAlias) {
+      await supabase
+        .from('urls')
+        .update({ clicks: (data.clicks || 0) + 1 })
+        .eq('custom_alias', alias);
+    } else {
+      await supabase
+        .from('urls')
+        .update({ clicks: (data.clicks || 0) + 1 })
+        .eq('short_id', alias);
     }
 
     // Cache in Redis for 1 hour

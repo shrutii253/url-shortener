@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { urlService } from '../services/urlService';
 
 console.log('RedirectHandler mounted'); // Debug log to check if component is loaded
@@ -8,8 +8,7 @@ console.log('RedirectHandler mounted'); // Debug log to check if component is lo
 export default function RedirectHandler() {
   const { shortId } = useParams<{ shortId: string }>();
   console.log('RedirectHandler shortId:', shortId); // Log shortId value
-  const [status, setStatus] = useState<'loading' | 'redirecting' | 'error'>('loading');
-  const [originalUrl, setOriginalUrl] = useState<string>('');
+  const [status, setStatus] = useState<'loading' | 'error'>('loading');
 
   useEffect(() => {
     console.log('useEffect shortId:', shortId); // Log shortId inside useEffect
@@ -53,29 +52,7 @@ export default function RedirectHandler() {
     );
   }
 
-  if (status === 'redirecting') {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden">
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          {/* You can reuse the Particles component from UrlForm if you want the same effect */}
-        </div>
-        <div className="bg-[#18181b] border border-[#232323] rounded-2xl shadow-xl p-8 text-center z-10">
-          <ExternalLink className="w-12 h-12 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Redirecting...</h2>
-          <p className="text-gray-400 mb-4">Taking you to:</p>
-          <p className="text-[#6e5cff] font-mono break-all bg-[#232323] p-3 rounded-lg">
-            {originalUrl}
-          </p>
-          <p className="text-sm text-gray-500 mt-4">
-            If you're not redirected automatically,
-            <a href={originalUrl} className="text-[#6e5cff] hover:underline ml-1">
-              click here
-            </a>
-          </p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden">

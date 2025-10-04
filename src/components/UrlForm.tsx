@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link, Copy, Check, AlertCircle, Zap } from 'lucide-react';
+import { Link, Copy, Check, AlertCircle, Zap, BarChart3 } from 'lucide-react';
 import { urlService } from '../services/urlService';
 import type { ShortenUrlResponse } from '../services/urlService';
 import Particles from 'react-tsparticles';
+import Analytics from './Analytics';
 
 export default function UrlForm() {
   const [longUrl, setLongUrl] = useState('');
@@ -12,6 +13,8 @@ export default function UrlForm() {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [analyticsAlias, setAnalyticsAlias] = useState('');
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -215,7 +218,19 @@ export default function UrlForm() {
                   </div>
                 </div>
               </div>
-              <div className="text-center">
+              <div className="text-center space-y-3">
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={() => {
+                      setAnalyticsAlias(result.shortId);
+                      setShowAnalytics(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#6e5cff] hover:bg-[#a855f7] text-white rounded-lg transition-colors duration-200"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    View Analytics
+                  </button>
+                </div>
                 <button
                   onClick={resetForm}
                   className={theme === 'dark' ? 'px-6 py-2 text-[#6e5cff] hover:text-[#a855f7] font-medium transition-colors duration-200' : 'px-6 py-2 text-[#6e5cff] hover:text-[#a855f7] font-medium transition-colors duration-200'}
@@ -231,6 +246,12 @@ export default function UrlForm() {
           </div>
         </div>
       </main>
+      {showAnalytics && (
+        <Analytics 
+          alias={analyticsAlias} 
+          onClose={() => setShowAnalytics(false)} 
+        />
+      )}
     </div>
   );
 }

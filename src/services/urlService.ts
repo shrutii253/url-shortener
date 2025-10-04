@@ -62,15 +62,16 @@ class UrlService {
     // Try short_id first
     let { data, error } = await supabase
       .from('urls')
-      .select('long_url')
+      .select('id, long_url, clicks')
       .eq('short_id', alias)
       .single();
 
-    // If not found, try custom_alias
+    let isCustomAlias = false;
     if (error || !data) {
+      // Try custom_alias
       const result = await supabase
         .from('urls')
-        .select('long_url')
+        .select('id, long_url, clicks')
         .eq('custom_alias', alias)
         .single();
       
@@ -78,6 +79,27 @@ class UrlService {
         return null;
       }
       data = result.data;
+      isCustomAlias = true;
+    }
+
+    // Log click
+    await supabase.from('click_logs').insert({
+      url_id: data.id,
+      alias,
+      user_agent: navigator.userAgent
+    });
+
+    // Increment clicks counter
+    if (isCustomAlias) {
+      await supabase
+        .from('urls')
+        .update({ clicks: (data.clicks || 0) + 1 })
+        .eq('custom_alias', alias);
+    } else {
+      await supabase
+        .from('urls')
+        .update({ clicks: (data.clicks || 0) + 1 })
+        .eq('short_id', alias);
     }
 
     return data.long_url;
@@ -111,6 +133,42 @@ class UrlService {
     }
     
     return data || [];
+  }
+
+  async getAnalytics(alias: string) {
+    const { data: url } = await supabase
+      .from('urls')
+      .select('id, clicks')
+      .or(`short_id.eq.${alias},custom_alias.eq.${alias}`)
+      .single();
+
+    if (!url) return null;
+
+    const { data: logs } = await supabase
+      .from('click_logs')
+      .select('created_at, country, city, user_agent')
+      .eq('url_id', url.id)
+      .order('created_at', { ascending: false });
+
+    return {
+      totalClicks: url.clicks || 0,
+      clickLogs: logs || [],
+      uniqueCountries: [...new Set(logs?.map(l => l.country).filter(Boolean))].length,
+      topCountries: this.getTopItems(logs?.map(l => l.country).filter(Boolean) || []),
+      topCities: this.getTopItems(logs?.map(l => l.city).filter(Boolean) || [])
+    };
+  }
+
+  private getTopItems(items: string[]) {
+    const counts = items.reduce((acc, item) => {
+      acc[item] = (acc[item] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return Object.entries(counts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
   }
 
   private isValidUrl(string: string): boolean {
