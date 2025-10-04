@@ -54,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Log click
     const forwardedFor = req.headers['x-forwarded-for'] as string;
     const realIP = forwardedFor ? forwardedFor.split(',')[0].trim() : req.headers['x-real-ip'] || 'unknown';
-    const ip = '8.8.8.8'; // Test IP - remove in production
+    const ip = realIP; 
     const userAgent = req.headers['user-agent'];
     
     // Get geolocation
