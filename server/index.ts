@@ -71,7 +71,7 @@ app.get('/api/url/:alias', async (req: Request, res: Response) => {
   let country = null, city = null;
   if (ip && ip !== '127.0.0.1' && ip !== '::1') {
     try {
-      const geoResponse = await fetch(`http://ip-api.com/json/${ip}`);
+      const geoResponse = await fetch(`https://ipinfo.io/${ip}/json`);
       const geoData = await geoResponse.json();
       if (geoData.status === 'success') {
         country = geoData.country;

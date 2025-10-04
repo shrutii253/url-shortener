@@ -60,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let country = null, city = null;
     if (ip && ip !== 'unknown' && ip !== '127.0.0.1') {
       try {
-        const geoResponse = await fetch(`http://ip-api.com/json/${ip}`);
+        const geoResponse = await fetch(`https://ipinfo.io/${ip}/json`);;
         const geoData = await geoResponse.json();
         console.log('Geo lookup for IP:', ip, 'Result:', geoData);
         if (geoData.status === 'success') {
