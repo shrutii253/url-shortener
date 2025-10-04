@@ -83,9 +83,7 @@ class UrlService {
     return data.long_url;
   }
 
-  async incrementClicks(shortId: string): Promise<void> {
-    await supabase.rpc('increment_clicks', { short_id_param: shortId });
-  }
+
 
   async getUrlStats(shortId: string): Promise<UrlRecord | null> {
     const { data, error } = await supabase
