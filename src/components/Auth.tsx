@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Zap, AlertCircle, User, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Particles from 'react-tsparticles';
@@ -10,6 +11,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const navigate = useNavigate();
 
   const { signIn, signUp } = useAuth();
 
@@ -25,8 +27,10 @@ export default function Auth() {
     try {
       if (isLogin) {
         await signIn(email, password);
+        navigate('/dashboard');
       } else {
         await signUp(email, password);
+        navigate('/dashboard');
       }
     } catch (err: any) {
       setError(err.message);
