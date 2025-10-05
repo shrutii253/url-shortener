@@ -83,30 +83,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Run analytics asynchronously after redirect
     setImmediate(async () => {
       try {
+        // Extract real IP address
         const forwardedFor = req.headers['x-forwarded-for'] as string;
-        const realIP = forwardedFor ? forwardedFor.split(',')[0].trim() : req.headers['x-real-ip'] || 'unknown';
-        const ip = realIP;
+        const realIP = req.headers['x-real-ip'] as string;
+        const cfConnectingIP = req.headers['cf-connecting-ip'] as string;
+        
+        const ip = cfConnectingIP || 
+                  (forwardedFor ? forwardedFor.split(',')[0].trim() : null) || 
+                  realIP || 
+                  'unknown';
+        
         const userAgent = req.headers['user-agent'];
+        console.log('IP extraction:', { forwardedFor, realIP, cfConnectingIP, finalIP: ip });
         
         // Get geolocation (async, doesn't block redirect)
         let country = null, city = null;
-        if (ip && ip !== 'unknown' && ip !== '127.0.0.1') {
+        if (ip && ip !== 'unknown' && ip !== '127.0.0.1' && !ip.startsWith('192.168.')) {
           try {
-            const geoResponse = await fetch(`https://ipinfo.io/${ip}/json`, {
-              headers: { 'Authorization': 'Bearer 29716b4fdee038' }
+            // Try ipinfo.io first
+            let geoResponse = await fetch(`https://ipinfo.io/${ip}/json`, {
+              headers: process.env.IPINFO_TOKEN ? 
+                { 'Authorization': `Bearer ${process.env.IPINFO_TOKEN}` } : {},
+              signal: AbortSignal.timeout(3000)
             });
-            const geoData = await geoResponse.json();
-            console.log('Geo lookup for IP:', ip, 'Result:', geoData);
-            if (geoData.country) {
-              country = geoData.country;
-              city = geoData.city;
+            
+            if (!geoResponse.ok) {
+              // Fallback to free service
+              geoResponse = await fetch(`http://ip-api.com/json/${ip}`, {
+                signal: AbortSignal.timeout(3000)
+              });
+              const geoData = await geoResponse.json();
+              if (geoData.status === 'success') {
+                country = geoData.countryCode;
+                city = geoData.city;
+              }
+            } else {
+              const geoData = await geoResponse.json();
+              if (geoData.country) {
+                country = geoData.country;
+                city = geoData.city;
+              }
             }
+            
+            console.log('Geo lookup for IP:', ip, 'Result:', { country, city });
           } catch (error) {
             console.error('Geolocation error:', error);
           }
         }
         
-        console.log('Logging click:', { realIP, ip, country, city, userAgent });
+        console.log('Logging click:', { ip, country, city, userAgent });
         
         // Log click and increment counter in parallel
         await Promise.all([

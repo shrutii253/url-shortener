@@ -73,21 +73,50 @@ app.get('/:alias', async (req: Request, res: Response) => {
     // Run analytics asynchronously after redirect
     setImmediate(async () => {
       try {
-        const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] as string;
+        // Extract real IP address
+        const forwardedFor = req.headers['x-forwarded-for'] as string;
+        const realIP = req.headers['x-real-ip'] as string;
+        const cfConnectingIP = req.headers['cf-connecting-ip'] as string;
+        
+        const ip = cfConnectingIP || 
+                  (forwardedFor ? forwardedFor.split(',')[0].trim() : null) || 
+                  realIP || 
+                  req.ip || 
+                  'unknown';
+        
         const userAgent = req.headers['user-agent'];
+        console.log('IP extraction:', { forwardedFor, realIP, cfConnectingIP, finalIP: ip });
         
         // Get geolocation (async, doesn't block redirect)
         let country = null, city = null;
-        if (ip && ip !== '127.0.0.1' && ip !== '::1') {
+        if (ip && ip !== '127.0.0.1' && ip !== '::1' && !ip.startsWith('192.168.')) {
           try {
-            const geoResponse = await fetch(`https://ipinfo.io/${ip}/json`, {
-              headers: { 'Authorization': 'Bearer 29716b4fdee038' }
+            // Try ipinfo.io first
+            let geoResponse = await fetch(`https://ipinfo.io/${ip}/json`, {
+              headers: process.env.IPINFO_TOKEN ? 
+                { 'Authorization': `Bearer ${process.env.IPINFO_TOKEN}` } : {},
+              signal: AbortSignal.timeout(3000)
             });
-            const geoData = await geoResponse.json();
-            if (geoData.country) {
-              country = geoData.country;
-              city = geoData.city;
+            
+            if (!geoResponse.ok) {
+              // Fallback to free service
+              geoResponse = await fetch(`http://ip-api.com/json/${ip}`, {
+                signal: AbortSignal.timeout(3000)
+              });
+              const geoData = await geoResponse.json();
+              if (geoData.status === 'success') {
+                country = geoData.countryCode;
+                city = geoData.city;
+              }
+            } else {
+              const geoData = await geoResponse.json();
+              if (geoData.country) {
+                country = geoData.country;
+                city = geoData.city;
+              }
             }
+            
+            console.log('Geo lookup for IP:', ip, 'Result:', { country, city });
           } catch (error) {
             console.error('Geolocation error:', error);
           }
