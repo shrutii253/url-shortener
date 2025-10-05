@@ -83,12 +83,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Run analytics asynchronously after redirect
     setImmediate(async () => {
       try {
-        // Extract real IP address
+        // Extract real IP address with better debugging
         const forwardedFor = req.headers['x-forwarded-for'] as string;
         const realIP = req.headers['x-real-ip'] as string;
         const cfConnectingIP = req.headers['cf-connecting-ip'] as string;
+        const vercelForwardedFor = req.headers['x-vercel-forwarded-for'] as string;
+        
+        // Log all available headers for debugging
+        console.log('All IP headers:', {
+          'x-forwarded-for': forwardedFor,
+          'x-real-ip': realIP,
+          'cf-connecting-ip': cfConnectingIP,
+          'x-vercel-forwarded-for': vercelForwardedFor
+        });
         
         const ip = cfConnectingIP || 
+                  vercelForwardedFor ||
                   (forwardedFor ? forwardedFor.split(',')[0].trim() : null) || 
                   realIP || 
                   'unknown';
@@ -98,7 +108,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         // Get geolocation (async, doesn't block redirect)
         let country = null, city = null;
-        if (ip && ip !== 'unknown' && ip !== '127.0.0.1' && !ip.startsWith('192.168.')) {
+        
+        // Debug: Check if IP passes filtering
+        const ipPassesFilter = ip && 
+                              ip !== 'unknown' && 
+                              ip !== '127.0.0.1' && 
+                              ip !== '::1' &&
+                              !ip.startsWith('192.168.') && 
+                              !ip.startsWith('10.') && 
+                              !ip.startsWith('172.16.') &&
+                              !ip.startsWith('::ffff:127.') &&
+                              !ip.includes('localhost');
+        
+        console.log('IP filter check:', { ip, passesFilter: ipPassesFilter });
+        
+        if (ipPassesFilter) {
           try {
             // Try ipinfo.io first
             let geoResponse = await fetch(`https://ipinfo.io/${ip}/json`, {
@@ -129,6 +153,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           } catch (error) {
             console.error('Geolocation error:', error);
           }
+        } else {
+          console.log('IP filtered out or invalid:', { ip, reason: 'Local/private IP detected' });
+          
+          // In development, you can uncomment this to test with a real IP:
+          // if (process.env.NODE_ENV === 'development') {
+          //   console.log('Development mode - testing with 8.8.8.8');
+          //   const testIP = '8.8.8.8';
+          //   // ... use testIP for geolocation
+          // }
         }
         
         console.log('Logging click:', { ip, country, city, userAgent });
