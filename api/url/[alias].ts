@@ -67,57 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       isCustomAlias = true;
     }
 
-    // Log click
-    const forwardedFor = req.headers['x-forwarded-for'] as string;
-    const realIP = forwardedFor ? forwardedFor.split(',')[0].trim() : req.headers['x-real-ip'] || 'unknown';
-    const ip = realIP; 
-    const userAgent = req.headers['user-agent'];
-    
-    // Get geolocation
-    let country = null, city = null;
-    if (ip && ip !== 'unknown' && ip !== '127.0.0.1') {
-      try {
-        const geoResponse = await fetch(`https://ipinfo.io/${ip}/json`, {
-          headers: {
-            'Authorization': 'Bearer 29716b4fdee038'
-          }
-        });
-        const geoData = await geoResponse.json();
-        console.log('Geo lookup for IP:', ip, 'Result:', geoData);
-        if (geoData.country) {
-          country = geoData.country;
-          city = geoData.city;
-        }
-      } catch (error) {
-        console.error('Geolocation error:', error);
-      }
-    }
-    
-    console.log('Logging click:', { realIP, ip, country, city, userAgent });
-    
-    await supabase.from('click_logs').insert({
-      url_id: data.id,
-      alias,
-      ip_address: ip,
-      user_agent: userAgent,
-      country,
-      city
-    });
-
-    // Increment clicks counter
-    if (isCustomAlias) {
-      await supabase
-        .from('urls')
-        .update({ clicks: (data.clicks || 0) + 1 })
-        .eq('custom_alias', alias);
-    } else {
-      await supabase
-        .from('urls')
-        .update({ clicks: (data.clicks || 0) + 1 })
-        .eq('short_id', alias);
-    }
-
-    // Cache in Redis for 1 hour
+    // Cache in Redis immediately for next request
     if (redis) {
       try {
         await redis.set(alias, data.long_url, 'EX', 3600);
@@ -127,8 +77,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Redirect to the original URL
-    return res.redirect(302, data.long_url);
+    // Redirect IMMEDIATELY - don't wait for analytics
+    res.redirect(302, data.long_url);
+
+    // Run analytics asynchronously after redirect
+    setImmediate(async () => {
+      try {
+        const forwardedFor = req.headers['x-forwarded-for'] as string;
+        const realIP = forwardedFor ? forwardedFor.split(',')[0].trim() : req.headers['x-real-ip'] || 'unknown';
+        const ip = realIP;
+        const userAgent = req.headers['user-agent'];
+        
+        // Get geolocation (async, doesn't block redirect)
+        let country = null, city = null;
+        if (ip && ip !== 'unknown' && ip !== '127.0.0.1') {
+          try {
+            const geoResponse = await fetch(`https://ipinfo.io/${ip}/json`, {
+              headers: { 'Authorization': 'Bearer 29716b4fdee038' }
+            });
+            const geoData = await geoResponse.json();
+            console.log('Geo lookup for IP:', ip, 'Result:', geoData);
+            if (geoData.country) {
+              country = geoData.country;
+              city = geoData.city;
+            }
+          } catch (error) {
+            console.error('Geolocation error:', error);
+          }
+        }
+        
+        console.log('Logging click:', { realIP, ip, country, city, userAgent });
+        
+        // Log click and increment counter in parallel
+        await Promise.all([
+          supabase.from('click_logs').insert({
+            url_id: data.id,
+            alias,
+            ip_address: ip,
+            user_agent: userAgent,
+            country,
+            city
+          }),
+          
+          // Increment clicks counter
+          isCustomAlias
+            ? supabase.from('urls').update({ clicks: (data.clicks || 0) + 1 }).eq('custom_alias', alias)
+            : supabase.from('urls').update({ clicks: (data.clicks || 0) + 1 }).eq('short_id', alias)
+        ]);
+        
+        console.log('Analytics completed asynchronously');
+      } catch (analyticsError) {
+        console.error('Analytics error (non-blocking):', analyticsError);
+      }
+    });
+
+    return; // Request already completed with redirect
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Internal server error' });
